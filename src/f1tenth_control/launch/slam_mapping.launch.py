@@ -18,14 +18,6 @@ def generate_launch_description():
         description='LiDAR scan topic published by the sensor driver'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'lidar_frame', default_value='laser',
-        description='TF frame ID attached to the LiDAR sensor'
-    ))
-    ld.add_action(DeclareLaunchArgument(
-        'laser_x_offset', default_value='0.27',
-        description='LiDAR x offset from base_link in meters (positive = forward)'
-    ))
-    ld.add_action(DeclareLaunchArgument(
         'wheelbase', default_value='0.3',
         description='Vehicle wheelbase in meters for bicycle model odometry'
     ))
@@ -46,7 +38,6 @@ def generate_launch_description():
     rviz_config = os.path.join(pkg, 'rviz', 'slam_mapping.rviz')
 
     # ── Wall follower ─────────────────────────────────────────────────────────
-    # enabled:=False by default — operator must set the parameter before the car moves
     wall_follower_node = Node(
         package='f1tenth_control',
         executable='wall_follower',
@@ -55,7 +46,6 @@ def generate_launch_description():
             'scan_topic': LaunchConfiguration('scan_topic'),
             'drive_topic': '/drive',
             'max_speed': LaunchConfiguration('max_speed'),
-            'enabled': False,
         }],
         output='screen',
     )
@@ -73,23 +63,9 @@ def generate_launch_description():
         output='screen',
     )
 
-    # ── Static TF: base_link → laser ─────────────────────────────────────────
-    # gym_bridge published this in the simulator; on real hardware nothing does.
-    # The laser is mounted forward of the base at laser_x_offset, same height.
-    static_tf_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='base_to_laser_tf',
-        arguments=[
-            LaunchConfiguration('laser_x_offset'), '0', '0',   # x y z
-            '0', '0', '0',                                       # roll pitch yaw
-            'base_link',
-            LaunchConfiguration('lidar_frame'),
-        ],
-        output='screen',
-    )
-
     # ── slam_toolbox async ────────────────────────────────────────────────────
+    # Note: base_link → laser static TF is published by teleop.launch.py.
+    # Do not duplicate it here — conflicting transforms break TF lookups.
     # async variant processes scans in a background thread so drive commands
     # and TF publishing continue at full rate during loop closure.
     slam_node = Node(
@@ -112,7 +88,6 @@ def generate_launch_description():
 
     ld.add_action(wall_follower_node)
     ld.add_action(pseudo_odom_node)
-    ld.add_action(static_tf_node)
     ld.add_action(slam_node)
     ld.add_action(rviz_node)
     return ld
