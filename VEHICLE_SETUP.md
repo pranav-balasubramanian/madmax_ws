@@ -166,21 +166,16 @@ ros2 launch f1tenth_control slam_mapping.launch.py \
 
 ## Step 4: Enable the Deadman's Switch
 
-The wall-follower will NOT move the car on startup. You must explicitly enable it after confirming
-the SLAM stack is healthy (see Step 5 below).
+The wall-follower will NOT move the car on startup. The joystick must be connected and publishing
+on `/joy` before you enable.
 
-```bash
-# In a new terminal — enable driving
-ros2 param set /wall_follower enabled true
-```
+**Hold the Y button (buttons[3]) to enable driving. Release it to stop immediately.**
 
-To stop the car at any time:
+The car drives only while the button is physically held. Releasing the button resets the PID
+integral so the next press starts cleanly without a steering jerk.
 
-```bash
-ros2 param set /wall_follower enabled false
-```
-
-Or press `Ctrl+C` in Terminal 2 — the node publishes a zero-speed command on shutdown.
+To kill the car from software at any time, press `Ctrl+C` in Terminal 2 — the node publishes a
+zero-speed command on shutdown.
 
 ---
 
@@ -310,8 +305,9 @@ pkill -f "async_slam_toolbox_node"
 Cosmetic — slam_toolbox publishes an identity `map → odom` at startup that gets replayed to late
 subscribers. These stop once slam_toolbox begins processing scans normally.
 
-### Car doesn't move after `ros2 param set /wall_follower enabled true`
+### Car doesn't move while holding Y button
 
+- Confirm the joystick is publishing: `ros2 topic hz /joy`
 - Confirm the VESC driver is running and `/drive` has a subscriber.
 - Confirm `/scan` is publishing (wall_follower only drives while scans arrive).
 - Check `ros2 node list` to ensure `wall_follower` is running.

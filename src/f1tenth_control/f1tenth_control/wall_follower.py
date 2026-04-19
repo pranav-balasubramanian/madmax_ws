@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Joy, LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 
 
@@ -18,16 +18,23 @@ class WallFollower(Node):
         self.declare_parameter('max_speed', 0.75)
         self.declare_parameter('scan_topic', '/scan')
         self.declare_parameter('drive_topic', '/drive')
-        # Deadman's switch — car does not move until this is set True
-        self.declare_parameter('enabled', False)
 
         self.max_speed = self.get_parameter('max_speed').value
         scan_topic = self.get_parameter('scan_topic').value
         drive_topic = self.get_parameter('drive_topic').value
 
+        # Deadman's switch — hold Y button (buttons[3]) to enable
+        self.enabled = False
+
         self.prev_error = 0.0
         self.integral_error = 0.0
 
+        self.joy_sub = self.create_subscription(
+            Joy,
+            '/joy',
+            self.joy_callback,
+            10
+        )
         self.lidar_sub = self.create_subscription(
             LaserScan,
             scan_topic,
@@ -42,9 +49,15 @@ class WallFollower(Node):
 
         self.get_logger().info(
             f'WallFollower ready. Listening on {scan_topic}, '
-            f'publishing to {drive_topic}. '
-            f'enabled={self.get_parameter("enabled").value}'
+            f'publishing to {drive_topic}. Hold Y button to enable.'
         )
+
+    def joy_callback(self, msg):
+        # Y button is buttons[3] — hold to enable, release to stop
+        if len(msg.buttons) > 3:
+            self.enabled = (msg.buttons[3] == 1)
+            if not self.enabled:
+                self.integral_error = 0.0
 
     def _emergency_stop(self, rays, min_angle, angle_inc):
         """Return True if any ray within the forward ±15° cone is closer than ESTOP_DISTANCE."""
@@ -119,8 +132,7 @@ class WallFollower(Node):
         return float(speed), float(steer)
 
     def scan_callback(self, msg):
-        # Re-read the parameter each callback so operator can enable without restart
-        if not self.get_parameter('enabled').value:
+        if not self.enabled:
             return
 
         scan = {
