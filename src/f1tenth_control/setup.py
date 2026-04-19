@@ -26,6 +26,8 @@ setup(
         'console_scripts': [
             'pure_pursuit_control = f1tenth_control.pure_pursuit_control:main',
             'waypoint_recorder = f1tenth_control.waypoint_recorder:main',
+            'wall_follower = f1tenth_control.wall_follower:main',
+            'pseudo_odom_node = f1tenth_control.pseudo_odom_node:main',
         ],
     },
 )
