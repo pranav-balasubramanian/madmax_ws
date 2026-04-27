@@ -26,7 +26,7 @@ def generate_launch_description():
         description='Multiply commanded speed by this factor before integrating odometry'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'max_speed', default_value='0.75',
+        'max_speed', default_value='1.5',
         description='Maximum drive speed for the wall follower (m/s)'
     ))
     ld.add_action(DeclareLaunchArgument(
