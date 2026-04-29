@@ -29,6 +29,8 @@ setup(
             'wall_follower = f1tenth_control.wall_follower:main',
             'pseudo_odom_node = f1tenth_control.pseudo_odom_node:main',
             'mapping_supervisor_node = f1tenth_control.mapping_supervisor_node:main',
+            'terminal_map_viewer = f1tenth_control.terminal_map_viewer:main',
+            'set_pose = f1tenth_control.set_pose:main',
         ],
     },
 )
