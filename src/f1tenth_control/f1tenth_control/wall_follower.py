@@ -10,7 +10,7 @@ from ackermann_msgs.msg import AckermannDriveStamped
 class WallFollower(Node):
     # Forward cone half-angle for emergency stop check (radians)
     ESTOP_HALF_ANGLE = np.radians(15.0)
-    ESTOP_DISTANCE = 0.3  # meters
+    ESTOP_DISTANCE = 0.1  # meters
 
     def __init__(self):
         super().__init__('wall_follower')
@@ -95,7 +95,9 @@ class WallFollower(Node):
         front_cone = rays[get_index(np.radians(-10)):get_index(np.radians(10)) + 1]
         valid_front = front_cone[np.isfinite(front_cone) & (front_cone > 0.0)]
         front_dist = float(np.min(valid_front)) if len(valid_front) > 0 else 0.0
-        speed = max(0.0, min(front_dist * 2.0, self.max_speed))
+        # speed = max(0.0, min(front_dist * 2.0, self.max_speed))
+        speed = 1.5
+
 
         # Steering: compare mean distance to left wall vs right wall at ±60°
         window = 5

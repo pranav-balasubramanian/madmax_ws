@@ -1,0 +1,63 @@
+amcl:
+  ros__parameters:
+
+    # ── Frames ────────────────────────────────────────────────────────────────
+    global_frame_id: map
+    odom_frame_id: odom
+    base_frame_id: base_link
+    scan_topic: /scan
+    map_topic: map
+
+    # ── Particle filter ───────────────────────────────────────────────────────
+    min_particles: 500
+    max_particles: 2000
+    pf_err: 0.05
+    pf_z: 0.99
+    resample_interval: 1
+
+    # ── Initial pose (operator corrects with 2D Pose Estimate in RViz) ────────
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+    # ── Motion model noise ────────────────────────────────────────────────────
+    # Tuned higher than for real wheel encoders because pseudo_odom_node uses a
+    # bicycle model with no slip compensation. Lower these (≈0.1) once you
+    # switch to VESC encoder odometry.
+    robot_model_type: nav2_amcl::DifferentialMotionModel
+    alpha1: 0.3   # rotation noise from rotation
+    alpha2: 0.2   # rotation noise from translation
+    alpha3: 0.3   # translation noise from translation
+    alpha4: 0.2   # translation noise from rotation
+    alpha5: 0.2
+
+    # ── Laser model ───────────────────────────────────────────────────────────
+    laser_model_type: likelihood_field
+    laser_max_range: 10.0   # Hokuyo UST-10LX max
+    laser_min_range: 0.05
+    max_beams: 60
+    laser_z_hit: 0.5
+    laser_z_rand: 0.5
+    laser_z_max: 0.05
+    laser_z_short: 0.05
+    laser_sigma_hit: 0.2
+    laser_likelihood_max_dist: 2.0
+
+    # ── Update thresholds ─────────────────────────────────────────────────────
+    update_min_d: 0.1
+    update_min_a: 0.1
+
+    # ── Recovery ─────────────────────────────────────────────────────────────
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
+
+    # ── TF / timing ───────────────────────────────────────────────────────────
+    tf_broadcast: true
+    transform_tolerance: 0.5
+    save_pose_rate: 0.5
+
+    do_beamsim_density_test: false
+    use_sim_time: false

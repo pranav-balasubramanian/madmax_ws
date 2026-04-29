@@ -86,8 +86,9 @@ class PseudoOdomNode(Node):
         odom.pose.pose.orientation.y = quat[1]
         odom.pose.pose.orientation.z = quat[2]
         odom.pose.pose.orientation.w = quat[3]
-        odom.twist.twist.linear.x = v * math.cos(self.theta)
-        odom.twist.twist.linear.y = v * math.sin(self.theta)
+        # Twist is in the child (base_link) frame per REP-105
+        odom.twist.twist.linear.x = v
+        odom.twist.twist.linear.y = 0.0
         odom.twist.twist.angular.z = v * math.tan(delta) / L
         self.odom_pub.publish(odom)
 

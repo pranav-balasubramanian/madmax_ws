@@ -1,0 +1,47 @@
+ekf_filter_node:
+  ros__parameters:
+
+    frequency: 50.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+
+    # ── Frames ────────────────────────────────────────────────────────────────
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    # ── TF broadcast ─────────────────────────────────────────────────────────
+    # pseudo_odom_node already broadcasts odom → base_link. EKF must NOT
+    # duplicate it or TF2 will see two parents for base_link.
+    publish_tf: false
+
+    # ── Source 0: pseudo-odometry from bicycle model ──────────────────────────
+    # Twist is in body frame (REP-105 compliant after the fix in
+    # pseudo_odom_node.py). Fuse the forward velocity and yaw rate; let AMCL
+    # handle absolute pose corrections.
+    odom0: /odom
+    odom0_config: [false, false, false,    # x, y, z position
+                   false, false, false,    # roll, pitch, yaw
+                   true,  false, false,    # vx (forward velocity)
+                   false, false, true,     # vyaw (angular rate)
+                   false, false, false]    # accelerations
+    odom0_relative: false
+    odom0_differential: false
+    odom0_queue_size: 10
+
+    # ── Source 1: AMCL pose ───────────────────────────────────────────────────
+    # AMCL provides absolute position in the map frame.
+    pose0: /amcl_pose
+    pose0_config: [true,  true,  false,    # x, y
+                   false, false, true,     # yaw
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_relative: false
+    pose0_differential: false
+    pose0_queue_size: 10
+    pose0_rejection_threshold: 5.0
+
+    print_diagnostics: true
+    debug: false
