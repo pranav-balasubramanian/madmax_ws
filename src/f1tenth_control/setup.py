@@ -28,6 +28,7 @@ setup(
             'waypoint_recorder = f1tenth_control.waypoint_recorder:main',
             'wall_follower = f1tenth_control.wall_follower:main',
             'pseudo_odom_node = f1tenth_control.pseudo_odom_node:main',
+            'mapping_supervisor_node = f1tenth_control.mapping_supervisor_node:main',
         ],
     },
 )

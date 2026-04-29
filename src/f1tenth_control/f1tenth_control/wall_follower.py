@@ -5,6 +5,7 @@ import numpy as np
 
 from sensor_msgs.msg import Joy, LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
+from std_msgs.msg import Float32
 
 
 class WallFollower(Node):
@@ -18,13 +19,19 @@ class WallFollower(Node):
         self.declare_parameter('max_speed', 0.75)
         self.declare_parameter('scan_topic', '/scan')
         self.declare_parameter('drive_topic', '/drive')
+        self.declare_parameter('target_speed_topic', '/wall_follower/target_speed')
 
         self.max_speed = self.get_parameter('max_speed').value
         scan_topic = self.get_parameter('scan_topic').value
         drive_topic = self.get_parameter('drive_topic').value
+        target_speed_topic = self.get_parameter('target_speed_topic').value
 
         # Deadman's switch — hold Y button (buttons[3]) to enable
         self.enabled = False
+
+        # Driving speed commanded by an external supervisor (mapping_supervisor_node).
+        # Falls back to max_speed when no supervisor is publishing.
+        self.target_speed = float(self.max_speed)
 
         self.prev_error = 0.0
         self.integral_error = 0.0
@@ -33,6 +40,12 @@ class WallFollower(Node):
             Joy,
             '/joy',
             self.joy_callback,
+            10
+        )
+        self.target_speed_sub = self.create_subscription(
+            Float32,
+            target_speed_topic,
+            self.target_speed_callback,
             10
         )
         self.lidar_sub = self.create_subscription(
@@ -58,6 +71,10 @@ class WallFollower(Node):
             self.enabled = (msg.buttons[3] == 1)
             if not self.enabled:
                 self.integral_error = 0.0
+
+    def target_speed_callback(self, msg):
+        # Clamp to non-negative; the supervisor uses 0.0 to request a halt.
+        self.target_speed = max(0.0, float(msg.data))
 
     def _emergency_stop(self, rays, min_angle, angle_inc):
         """Return True if any ray within the forward ±15° cone is closer than ESTOP_DISTANCE."""
@@ -91,12 +108,8 @@ class WallFollower(Node):
             self.prev_error = 0.0
             return 0.0, 0.0
 
-        # Speed: scale with forward clearance, capped at max_speed
-        front_cone = rays[get_index(np.radians(-10)):get_index(np.radians(10)) + 1]
-        valid_front = front_cone[np.isfinite(front_cone) & (front_cone > 0.0)]
-        front_dist = float(np.min(valid_front)) if len(valid_front) > 0 else 0.0
-        # speed = max(0.0, min(front_dist * 2.0, self.max_speed))
-        speed = 1.5
+        # Speed is commanded externally by the supervisor (boost / ramp / mapping / stop).
+        speed = self.target_speed
 
 
         # Steering: compare mean distance to left wall vs right wall at ±60°
